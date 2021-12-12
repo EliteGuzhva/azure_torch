@@ -1,6 +1,11 @@
 # Облачные технологии: Курсовая
 Distributed training with PyTorch and AzureML.
 
+## Prerequisites
+```bash
+pip install torch torchvision azureml-core azureml-dataprep
+```
+
 ## TODO:
 - [ ] Добавить модель из ноутбука на Kaggle
 - [ ] Загрузка датасета Intel
