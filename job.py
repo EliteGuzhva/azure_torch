@@ -1,5 +1,5 @@
 # imports
-import os
+import os, argparse
 import urllib
 import tarfile
 from pathlib import Path
@@ -9,6 +9,16 @@ from azureml.core.compute import ComputeTarget, AmlCompute
 from azureml.core.compute_target import ComputeTargetException
 from azureml.core.runconfig import PyTorchConfiguration
 
+# args
+parser = argparse.ArgumentParser()
+parser.add_argument("--epochs", default=10, type=int, help="number of epochs")
+parser.add_argument("--train-script", default="train.py", type=str, help="train script filename")
+parser.add_argument("--experiment-name", default="azure-pytorch", type=str, help="experiment name")
+parser.add_argument("--cluster-name", default="gpu-cluster", type=str, help="cluter name")
+parser.add_argument("--vm-size", default="STANDARD_NC6", type=str, help="azureml compute target configuration")
+parser.add_argument("--num-nodes", default=1, type=int, help="number of nodes in a cluster")
+args = parser.parse_args()
+
 # get workspace
 ws = Workspace.from_config()
 
@@ -17,21 +27,21 @@ prefix = Path(__file__).parent
 
 # training script
 source_dir = str(prefix.joinpath("src"))
-script_name = "train.py"
+script_name = args.train_script
 
 # azure ml settings
 environment_name = "AzureML-PyTorch-1.6-GPU"  # using curated environment
-experiment_name = "pytorch-cifar10-distributed-example"
+experiment_name = args.experiment_name
 
 # compute target
-cluster_name = "gpu-cluster"
+cluster_name = args.cluster_name
 try:
     compute_target = ComputeTarget(workspace=ws, name=cluster_name)
     print('Found existing compute target')
 except ComputeTargetException:
     print('Creating a new compute target...')
-    compute_config = AmlCompute.provisioning_configuration(vm_size='STANDARD_NC6', 
-                                                           max_nodes=2)
+    compute_config = AmlCompute.provisioning_configuration(vm_size=args.vm_size, 
+                                                           max_nodes=args.num_nodes)
 
     compute_target = ComputeTarget.create(ws, cluster_name, compute_config)
 
@@ -60,10 +70,10 @@ dataset = Dataset.File.upload_directory(
 )
 
 # create distributed config
-distr_config = PyTorchConfiguration(node_count=1)
+distr_config = PyTorchConfiguration(node_count=args.num_nodes)
 
 # create args
-args = ["--data-dir", dataset.as_download(), "--epochs", 25]
+args = ["--data-dir", dataset.as_download(), "--epochs", args.epochs]
 
 # create job config
 src = ScriptRunConfig(
