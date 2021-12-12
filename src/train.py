@@ -190,7 +190,7 @@ def main(args):
 
     if not distributed or rank == 0:
         os.makedirs(args.output_dir, exist_ok=True)
-        model_path = os.path.join(args.output_dir, "cifar_net.pt")
+        model_path = os.path.join(args.output_dir, "model.pt")
         torch.save(model.state_dict(), model_path)
 
         # evaluate on full test dataset
