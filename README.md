@@ -3,7 +3,7 @@ Distributed training with PyTorch and AzureML.
 
 ## Prerequisites
 ```bash
-pip install torch torchvision azureml-core azureml-dataprep
+pip install -r requirements.txt
 ```
 
 ## Usage
