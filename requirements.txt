@@ -2,5 +2,6 @@ autopep8
 PyYaml
 torch
 torchvision
+azure-cli
 azureml-core
 azureml-dataprep

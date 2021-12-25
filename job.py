@@ -6,10 +6,11 @@ from azureml.core import Workspace, ScriptRunConfig, Experiment, Environment, Da
 from azureml.core.compute import ComputeTarget, AmlCompute
 from azureml.core.compute_target import ComputeTargetException
 from azureml.core.runconfig import PyTorchConfiguration
+from azureml.core.authentication import AzureCliAuthentication
 
 # args
 parser = argparse.ArgumentParser()
-parser.add_argument("--config", default="cifar_single", type=str,
+parser.add_argument("--config", default="cifar_single_test", type=str,
                     help="Run configuration specified in config/{name}.yaml")
 args = parser.parse_args()
 
@@ -23,7 +24,8 @@ with open(f"config/{args.config}.yaml", "r") as f:
         exit()
 
 # get workspace
-ws = Workspace.from_config()
+cli_auth = AzureCliAuthentication()
+ws = Workspace.from_config(auth=cli_auth)
 
 # get root of git repo
 prefix = Path(__file__).parent
@@ -57,7 +59,8 @@ dataset = Dataset.File.upload_directory(
 )
 
 # create distributed config
-distr_config = PyTorchConfiguration(node_count=config['num_nodes'])
+distr_config = PyTorchConfiguration(
+    node_count=config['num_nodes'], process_count=config['num_processes'])
 
 # create args
 script_args = [

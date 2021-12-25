@@ -15,6 +15,11 @@ Distributed training with PyTorch and AzureML.
 pip install -r requirements.txt
 ```
 
+3. Authentication
+```bash
+az login
+```
+
 ## Usage
 Sample
 ```bash
@@ -22,7 +27,7 @@ Sample
 python3 load_cifar10.py
 
 # Run training job
-python3 job.py --config cifar_single
+python3 job.py --config cifar_single_test
 ```
 
 ## TODO:

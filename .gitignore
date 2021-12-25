@@ -1,3 +1,4 @@
+.vscode
 cifar-10*
 config.json*
 venv*

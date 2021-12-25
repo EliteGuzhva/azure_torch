@@ -11,7 +11,7 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "args": [
-                "--config=cifar_single",
+                "--config=cifar_single_test",
             ]
         }
     ]

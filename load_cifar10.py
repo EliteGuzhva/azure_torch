@@ -1,4 +1,5 @@
 import os, urllib, tarfile
+import urllib.request
 
 
 url = "https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz"

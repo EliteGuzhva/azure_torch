@@ -53,10 +53,10 @@ def train(train_loader, model, criterion, optimizer, epoch, device, print_freq, 
 
         # print statistics
         running_loss += loss.item()
-        if i % print_freq == 0:  # print every print_freq mini-batches
+        if i > 0 and i % print_freq == 0:  # print every print_freq mini-batches
             print(
                 "Rank %d: [%d, %5d] loss: %.3f"
-                % (rank, epoch + 1, i + 1, running_loss / print_freq)
+                % (rank, epoch + 1, i, running_loss / print_freq)
             )
             running_loss = 0.0
 
@@ -171,7 +171,7 @@ def main(args):
 
     # train the model
     for epoch in range(args.epochs):
-        print("Rank %d: Starting epoch %d" % (rank, epoch))
+        print("Rank %d: Starting epoch %d" % (rank, epoch + 1))
         if distributed and train_sampler is not None:
             train_sampler.set_epoch(epoch)
         model.train()
