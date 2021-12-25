@@ -34,5 +34,5 @@ python3 job.py --config cifar_single_test
 - [ ] Добавить модель из ноутбука на Kaggle
 - [ ] Загрузка датасета Intel (load_intel.py + preprocessing)
 - [x] Добавить аргументы для запуска job.py (script_name, experiment_name, cluster_name, epochs, ...)
-- [ ] Добавить валидацию модели на каждой эпохе обучения
-- [ ] Добавить отписывание графика с результатами обучения (loss, accuracy, etc..) в .png
+- [x] Добавить валидацию модели на каждой эпохе обучения
+- [x] Добавить отписывание логов с результатами обучения (loss, accuracy, etc..)
