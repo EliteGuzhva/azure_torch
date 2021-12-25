@@ -37,7 +37,11 @@ class Net(nn.Module):
 
 # define functions
 def train(train_loader, model, criterion, optimizer, epoch, device, print_freq, rank):
+    ret_loss = 0.0
+    ret_accuracy = 0.0
     running_loss = 0.0
+    correct = 0
+    total = 0
     for i, data in enumerate(train_loader, 0):
         # get the inputs; data is a list of [inputs, labels]
         inputs, labels = data[0].to(device), data[1].to(device)
@@ -52,60 +56,42 @@ def train(train_loader, model, criterion, optimizer, epoch, device, print_freq, 
         optimizer.step()
 
         # print statistics
+        _, predicted = torch.max(outputs.data, 1)
+        total += labels.size(0)
+        correct += (predicted == labels).sum().item()
         running_loss += loss.item()
         if i > 0 and i % print_freq == 0:  # print every print_freq mini-batches
-            print(
-                "Rank %d: [%d, %5d] loss: %.3f"
-                % (rank, epoch + 1, i, running_loss / print_freq)
-            )
+            cur_loss = running_loss / print_freq
+            cur_accuracy = 100 * correct / total
+            print(f"Rank {rank}: [{epoch + 1}, {i}] "
+                  f"loss: {cur_loss:.3f} "
+                  f"accuracy: {cur_accuracy:.3f}%")
+            ret_loss = cur_loss
+            ret_accuracy = cur_accuracy
             running_loss = 0.0
+            correct = 0
+            total = 0
+    
+    return ret_loss, ret_accuracy
 
 
 def evaluate(test_loader, model, device):
-    classes = (
-        "plane",
-        "car",
-        "bird",
-        "cat",
-        "deer",
-        "dog",
-        "frog",
-        "horse",
-        "ship",
-        "truck",
-    )
-
-    model.eval()
-
     correct = 0
     total = 0
-    class_correct = list(0.0 for _ in range(10))
-    class_total = list(0.0 for _ in range(10))
+    model.eval()
     with torch.no_grad():
         for data in test_loader:
             images, labels = data[0].to(device), data[1].to(device)
+
             outputs = model(images)
             _, predicted = torch.max(outputs.data, 1)
+
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
-            c = (predicted == labels).squeeze()
-            for i in range(10):
-                label = labels[i]
-                class_correct[label] += c[i].item()
-                class_total[label] += 1
 
     # print total test set accuracy
-    print(
-        "Accuracy of the network on the 10000 test images: %d %%"
-        % (100 * correct / total)
-    )
-
-    # print test accuracy for each of the classes
-    for i in range(10):
-        print(
-            "Accuracy of %5s : %2d %%"
-            % (classes[i], 100 * class_correct[i] / class_total[i])
-        )
+    accuracy = 100 * correct / total
+    print(f"Accuracy on test set: {accuracy}%")
 
 
 def main(args):
@@ -160,38 +146,39 @@ def main(args):
     # wrap model with DDP
     if distributed:
         model = nn.parallel.DistributedDataParallel(
-            model, device_ids=[local_rank], output_device=local_rank
-        )
+            model, device_ids=[local_rank], output_device=local_rank)
 
     # define loss function and optimizer
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(
-        model.parameters(), lr=args.learning_rate, momentum=args.momentum
-    )
+    optimizer = optim.SGD(model.parameters(),
+                          lr=args.learning_rate, momentum=args.momentum)
 
     # train the model
+    losses = []
+    accuracies = []
     for epoch in range(args.epochs):
-        print("Rank %d: Starting epoch %d" % (rank, epoch + 1))
+        print(f"Rank {rank}: Starting epoch {epoch + 1}")
         if distributed and train_sampler is not None:
             train_sampler.set_epoch(epoch)
         model.train()
-        train(
-            train_loader,
-            model,
-            criterion,
-            optimizer,
-            epoch,
-            device,
-            args.print_freq,
-            rank,
-        )
+        loss, accuracy = train(train_loader, model, criterion,
+                               optimizer, epoch, device, args.print_freq, rank)
+        losses.append(loss)
+        accuracies.append(accuracy)
 
-    print("Rank %d: Finished Training" % (rank))
+    print(f"Rank {rank}: Finished Training")
 
     if not distributed or rank == 0:
         os.makedirs(args.output_dir, exist_ok=True)
+
         model_path = os.path.join(args.output_dir, "model.pt")
         torch.save(model.state_dict(), model_path)
+
+        loss_path = os.path.join(args.output_dir, "log.csv")
+        with open(loss_path, 'w') as f:
+            f.write("epoch,loss,accuracy\n")
+            for i in range(len(losses)):
+                f.write(f"{i+1},{losses[i]},{accuracies[i]}\n")
 
         # evaluate on full test dataset
         evaluate(test_loader, model, device)

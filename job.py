@@ -64,10 +64,11 @@ distr_config = PyTorchConfiguration(
 
 # create args
 script_args = [
-        "--data-dir", dataset.as_download(),
-        "--epochs", config['epochs'],
-        "--batch-size", config['batch_size']
-    ]
+    "--data-dir", dataset.as_download(),
+    "--epochs", config['epochs'],
+    "--batch-size", config['batch_size'],
+    "--learning-rate", config['learning_rate']
+]
 
 # create job config
 src = ScriptRunConfig(

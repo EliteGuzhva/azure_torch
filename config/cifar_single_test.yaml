@@ -1,5 +1,6 @@
 epochs: 20
 batch_size: 16
+learning_rate: 0.001
 train_script: cifar.py
 data_dir: cifar-10
 experiment_name: cifar_single_test
