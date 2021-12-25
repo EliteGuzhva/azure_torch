@@ -19,19 +19,10 @@ pip install -r requirements.txt
 Sample
 ```bash
 # Download dataset
-python load_cifar10.py
+python3 load_cifar10.py
 
 # Run training job
-python job.py \
-    --epochs 25 \
-    --batch-size 16 \
-    --train-script train.py \
-    --data-dir cifar-10 \
-    --experiment-name my-experiment \
-    --cluster-name my-cluster \
-    --vm-size STANDARD_NC6 \
-    --num_nodes 1 \
-    --environment-name AzureML-PyTorch-1.6-GPU
+python3 job.py --config cifar_single
 ```
 
 ## TODO:
@@ -40,4 +31,3 @@ python job.py \
 - [x] Добавить аргументы для запуска job.py (script_name, experiment_name, cluster_name, epochs, ...)
 - [ ] Добавить валидацию модели на каждой эпохе обучения
 - [ ] Добавить отписывание графика с результатами обучения (loss, accuracy, etc..) в .png
-

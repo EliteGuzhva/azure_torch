@@ -1,0 +1,9 @@
+epochs: 2
+batch_size: 16
+train_script: train.py
+data_dir: cifar-10
+experiment_name: cifar_single_test
+cluster_name: single-gpu
+vm_size: STANDARD_NC6
+num_nodes: 1
+environment_name: AzureML-PyTorch-1.6-GPU
