@@ -1,0 +1,9 @@
+{
+	"name": "AzureML",
+	"build": {
+		"dockerfile": "../Dockerfile"
+	},
+	"extensions": [
+		"ms-python.python"
+	],
+}

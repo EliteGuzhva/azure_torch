@@ -2,6 +2,15 @@
 Distributed training with PyTorch and AzureML.
 
 ## Prerequisites
+
+1. Download ```config.json``` from AzureML workspace and copy to the root of this project.
+![](res/azure_config.png)
+
+### Devcontainer (Recommended)
+2. In VSCode open Command Palette and run ```Rebuild and Reopen in DevContainer``` or build your own image using ```Dockerfile```.
+
+### Local
+2. Install python packages
 ```bash
 pip install -r requirements.txt
 ```
