@@ -5,3 +5,4 @@ torchvision
 azure-cli
 azureml-core
 azureml-dataprep
+gdown
