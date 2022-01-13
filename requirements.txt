@@ -3,6 +3,6 @@ PyYaml
 torch
 torchvision
 azure-cli
-azureml-core
+azureml-core==1.37.0
 azureml-dataprep
 gdown

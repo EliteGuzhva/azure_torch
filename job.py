@@ -54,9 +54,10 @@ env = Environment.get(ws, name=config['environment_name'])
 # create azureml dataset
 data_root = config['data_dir']
 datastore = ws.get_default_datastore()
-dataset = Dataset.File.upload_directory(
-    src_dir=data_root, target=(datastore, data_root)
-)
+dataset = Dataset.File.from_files(path=(datastore, data_root))
+# dataset = Dataset.File.upload_directory(
+#     src_dir=data_root, target=(datastore, data_root)
+# )
 
 # create distributed config
 distr_config = PyTorchConfiguration(
@@ -67,7 +68,7 @@ script_args = [
     "--data-dir", dataset.as_download(),
     "--epochs", config['epochs'],
     "--batch-size", config['batch_size'],
-    "--learning-rate", config['learning_rate']
+    "--learning-rate", float(config['learning_rate'])
 ]
 
 # create job config
@@ -83,3 +84,4 @@ src = ScriptRunConfig(
 # submit job
 run = Experiment(ws, config['experiment_name']).submit(src)
 run.wait_for_completion(show_output=True)
+

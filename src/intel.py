@@ -1,12 +1,14 @@
 # imports
-import os, argparse, yaml
+import os
+import yaml
+import argparse
 import torch
 import torchvision
-import torchvision.transforms as transforms
 import torch.nn as nn
-import torch.nn.functional as F
-import torch.optim as optim
 import torch.distributed as dist
+import torchvision.transforms as transforms
+from torch import optim
+from torchvision import transforms, models
 from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
 
@@ -15,23 +17,21 @@ from torch.utils.data.distributed import DistributedSampler
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
-        self.conv1 = nn.Conv2d(3, 32, 3)
-        self.pool = nn.MaxPool2d(2, 2)
-        self.conv2 = nn.Conv2d(32, 64, 3)
-        self.conv3 = nn.Conv2d(64, 128, 3)
-        self.fc1 = nn.Linear(128 * 6 * 6, 120)
-        self.dropout = nn.Dropout(p=0.2)
-        self.fc2 = nn.Linear(120, 84)
-        self.fc3 = nn.Linear(84, 10)
+        self.model = models.resnet18(pretrained=True)
+        for param in self.model.parameters():
+            param.requires_grad = False
+
+        self.model.avgpool = nn.AdaptiveAvgPool2d(output_size=(1, 1))
+        self.model.fc = nn.Sequential(
+            nn.Flatten(),
+            nn.Linear(512, 128),
+            nn.ReLU(),
+            nn.Dropout(0.2),
+            nn.Linear(128, 6)
+        )
 
     def forward(self, x):
-        x = F.relu(self.conv1(x))
-        x = self.pool(F.relu(self.conv2(x)))
-        x = self.pool(F.relu(self.conv3(x)))
-        x = x.view(-1, 128 * 6 * 6)
-        x = self.dropout(F.relu(self.fc1(x)))
-        x = F.relu(self.fc2(x))
-        x = self.fc3(x)
+        x = self.model(x)
         return x
 
 
@@ -113,13 +113,22 @@ def main(args):
         dist.init_process_group(backend="nccl")
 
     # define train and test dataset DataLoaders
-    transform = transforms.Compose(
-        [transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
-    )
+    transform = transforms.Compose([
+        transforms.Resize((150, 150)),
+        transforms.RandomHorizontalFlip(p=0.5),
+        transforms.ColorJitter(0.3, 0.4, 0.4, 0.2),
+        transforms.ToTensor(),
+        transforms.Normalize((0.425, 0.415, 0.405), (0.205, 0.205, 0.205))
+    ])
 
-    train_set = torchvision.datasets.CIFAR10(
-        root=args.data_dir, train=True, download=False, transform=transform
-    )
+    transform_test = transforms.Compose([
+        transforms.Resize((150, 150)),
+        transforms.ToTensor(),
+        transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
+    ])
+
+    train_data_dir = args.data_dir + "/seg_train/seg_train"
+    train_set = torchvision.datasets.ImageFolder(root=train_data_dir, transform=transform)
 
     if distributed:
         train_sampler = DistributedSampler(train_set)
@@ -132,13 +141,17 @@ def main(args):
         shuffle=(train_sampler is None),
         num_workers=args.workers,
         sampler=train_sampler,
+        drop_last=True
     )
 
-    test_set = torchvision.datasets.CIFAR10(
-        root=args.data_dir, train=False, download=False, transform=transform
-    )
+    test_data_dir = args.data_dir + "/seg_test/seg_test"
+    test_set = torchvision.datasets.ImageFolder(root=test_data_dir, transform=transform_test)
     test_loader = DataLoader(
-        test_set, batch_size=args.batch_size, shuffle=False, num_workers=args.workers
+        test_set,
+        batch_size=args.batch_size,
+        shuffle=False,
+        num_workers=args.workers,
+        drop_last=True
     )
 
     model = Net().to(device)
@@ -150,8 +163,8 @@ def main(args):
 
     # define loss function and optimizer
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(model.parameters(),
-                          lr=args.learning_rate, momentum=args.momentum)
+    optimizer = optim.Adam(model.parameters(),
+                           lr=args.learning_rate)
 
     # train the model
     losses = []
@@ -198,12 +211,12 @@ if __name__ == "__main__":
     # setup argparse
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--data-dir", type=str, help="directory containing CIFAR-10 dataset"
+        "--data-dir", type=str, help="directory containing Intel image classification dataset"
     )
     parser.add_argument("--epochs", default=10, type=int, help="number of epochs")
     parser.add_argument(
         "--batch-size",
-        default=16,
+        default=32,
         type=int,
         help="mini batch size for each gpu/process",
     )
@@ -214,15 +227,14 @@ if __name__ == "__main__":
         help="number of data loading workers for each gpu/process",
     )
     parser.add_argument(
-        "--learning-rate", default=0.001, type=float, help="learning rate"
+        "--learning-rate", default=1e-3, type=float, help="learning rate"
     )
-    parser.add_argument("--momentum", default=0.9, type=float, help="momentum")
     parser.add_argument(
         "--output-dir", default="outputs", type=str, help="directory to save model to"
     )
     parser.add_argument(
         "--print-freq",
-        default=200,
+        default=50,
         type=int,
         help="frequency of printing training statistics",
     )
@@ -230,4 +242,5 @@ if __name__ == "__main__":
 
     # call main function
     main(args)
+
 
