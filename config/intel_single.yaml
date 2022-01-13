@@ -1,12 +1,12 @@
-epochs: 200
+epochs: 50
 batch_size: 32
 learning_rate: 1e-3
+print_freq: 50
 train_script: intel.py
 data_dir: intel-image-classification
-experiment_name: intel_dist_test
-cluster_name: dist-gpu
-vm_size: STANDARD_NC24
-num_nodes: 4
-num_processes: 16
+experiment_name: intel_single
+cluster_name: single-gpu
+vm_size: STANDARD_NC6
+num_nodes: 1
+num_processes: 1
 environment_name: AzureML-PyTorch-1.6-GPU
-

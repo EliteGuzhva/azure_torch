@@ -1,9 +1,10 @@
-epochs: 20
+epochs: 50
 batch_size: 16
-learning_rate: 0.001
+learning_rate: 1e-3
+print_freq: 300
 train_script: cifar.py
 data_dir: cifar-10
-experiment_name: cifar_single_test
+experiment_name: cifar_single
 cluster_name: single-gpu
 vm_size: STANDARD_NC6
 num_nodes: 1

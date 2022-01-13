@@ -3,3 +3,4 @@ cifar-10*
 intel-image-classification*
 config.json*
 venv*
+pyrightconfig.json
