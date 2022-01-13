@@ -190,7 +190,8 @@ def main(args):
         info = {
             "epochs": args.epochs,
             "batch_size": args.batch_size,
-            "learning_rate": args.learning_rate
+            "learning_rate": args.learning_rate,
+            "num_nodes": world_size
         }
         info_path = os.path.join(args.output_dir, "info.yaml")
         with open(info_path, 'w') as f:
@@ -234,7 +235,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--print-freq",
-        default=50,
+        default=10,
         type=int,
         help="frequency of printing training statistics",
     )
