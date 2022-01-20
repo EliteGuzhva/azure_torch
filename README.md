@@ -27,12 +27,6 @@ Sample
 python3 load_cifar10.py
 
 # Run training job
-python3 job.py --config cifar_single_test
+python3 job.py --config cifar_dist
 ```
 
-## TODO:
-- [x] Добавить модель из ноутбука на Kaggle
-- [x] Загрузка датасета Intel (load_intel.py + preprocessing)
-- [x] Добавить аргументы для запуска job.py (script_name, experiment_name, cluster_name, epochs, ...)
-- [x] Добавить валидацию модели на каждой эпохе обучения
-- [x] Добавить отписывание логов с результатами обучения (loss, accuracy, etc..)
